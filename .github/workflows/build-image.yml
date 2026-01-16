@@ -3,7 +3,7 @@ name: Build & Deploy Spring Boot to VPS
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Cho phép chạy thủ công
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -37,7 +37,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:${{ github.sha }}
 
   # deploy:
