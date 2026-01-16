@@ -35,9 +35,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
-          # Nếu muốn tag theo version: ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:${{ github.sha }}
 
   # deploy:
   #   runs-on: ubuntu-latest
