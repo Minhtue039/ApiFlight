@@ -41,34 +41,34 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:${{ github.sha }}
 
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: build-and-push  # Chỉ chạy sau khi build thành công
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push  # Chỉ chạy sau khi build thành công
 
-  #   steps:
-  #     - name: Deploy to Remote VPS via SSH
-  #       uses: appleboy/ssh-action@v1.0.3
-  #       with:
-  #         host: ${{ secrets.SSH_HOST }}
-  #         username: ${{ secrets.SSH_USERNAME }}
-  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
-  #         port: ${{ secrets.SERVER_PORT }}
-  #         script: |
-  #           # Pull image mới nhất
-  #           docker pull ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
+    steps:
+      - name: Deploy to Remote VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            # Pull image mới nhất
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
 
-  #           # Dừng và xóa container cũ (nếu có)
-  #           docker stop flightapi || true
-  #           docker rm flightapi || true
+            # Dừng và xóa container cũ (nếu có)
+            docker stop flightapi || true
+            docker rm flightapi || true
 
-  #           # Chạy container mới
-  #           docker run -d \
-  #             --name flightapi \
-  #             --restart unless-stopped \
-  #             -p 8080:8080 \
-  #             -e SPRING_PROFILES_ACTIVE=prod \
-  #             # Thêm các env khác nếu cần, ví dụ DB
-  #             # -e SPRING_DATASOURCE_URL=...
-  #             ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
+            # Chạy container mới
+            docker run -d \
+              --name flightapi \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              # Thêm các env khác nếu cần, ví dụ DB
+              # -e SPRING_DATASOURCE_URL=...
+              ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
 
-  #           echo "Deployment completed!"
+            echo "Deployment completed!"
