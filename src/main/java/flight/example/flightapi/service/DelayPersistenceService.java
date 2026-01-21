@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +22,8 @@ public class DelayPersistenceService {
    private final FlightDelayArrRepository arrivalRepository;
 
    public DelayPersistenceService(
-         FlightDelayDepRepository departureRepository,
-         FlightDelayArrRepository arrivalRepository) {
+         @Autowired(required = false) FlightDelayDepRepository departureRepository,
+         @Autowired(required = false) FlightDelayArrRepository arrivalRepository) {
       this.departureRepository = departureRepository;
       this.arrivalRepository = arrivalRepository;
    }

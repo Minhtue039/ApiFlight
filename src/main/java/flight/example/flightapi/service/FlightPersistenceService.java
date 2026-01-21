@@ -16,7 +16,7 @@ import flight.example.flightapi.repository.FlightDataRepository;
 public class FlightPersistenceService {
    private static final Logger log = LoggerFactory.getLogger(FlightPersistenceService.class);
 
-   @Autowired
+   @Autowired(required = false)
    private FlightDataRepository repository;
 
    // Asynchronous handling methods to avoid blocking the main thread.
