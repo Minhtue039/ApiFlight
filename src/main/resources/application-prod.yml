@@ -1,0 +1,23 @@
+spring:
+  profiles: prod
+  datasource:
+    url: postgresql://flightapi_user:XJrScPT1XjT4011cpGimvqeWXT10Fo5b@dpg-d5o7im7gi27c73egtgbg-a.singapore-postgres.render.com/flightapi_zkfe
+    username: flightapi_user
+    password: XJrScPT1XjT4011cpGimvqeWXT10Fo5b
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update        # production có thể dùng validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Redis (nếu dùng cache)
+spring:
+  data:
+    redis:
+      host: redis-10753.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:10753
+      port: 10753
+      password: Xl3ueWBKX2yqYtehO9VfIRL5nG1a6tMW

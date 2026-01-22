@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -47,6 +48,8 @@ public class DelayFlightService {
     * @param type "departures" hoặc "arrivals"
     * @return danh sách DelayFlightResponse (dùng để hiển thị ngay lập tức)
     */
+
+   @Cacheable(value = "delayedFlights", key = "#type")
    public List<DelayFlightResponse> fetchDelayedFlights(String type) {
       if (!"departures".equals(type) && !"arrivals".equals(type)) {
          log.warn("Invalid delay type: {}. Must be 'departures' or 'arrivals'", type);

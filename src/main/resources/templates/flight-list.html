@@ -1,13 +1,14 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flight Data - Simple Viewer</title>
+    <title>Flight Data Viewer</title>
     <style>
       body {
         font-family: Arial, Helvetica, sans-serif;
         margin: 20px;
+        line-height: 1.5;
       }
       .search-box {
         margin-bottom: 25px;
@@ -15,15 +16,17 @@
       table {
         border-collapse: collapse;
         width: 100%;
+        margin-bottom: 30px;
       }
       th,
       td {
         border: 1px solid #ddd;
-        padding: 8px;
+        padding: 10px;
         text-align: left;
       }
       th {
         background-color: #f2f2f2;
+        font-weight: bold;
       }
       tr:nth-child(even) {
         background-color: #f9f9f9;
@@ -40,6 +43,7 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
+        flex-wrap: wrap;
       }
       .status-stats {
         font-size: 0.95em;
@@ -59,23 +63,53 @@
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
+        padding: 14px 20px;
         transition: 0.3s;
+        font-size: 16px;
       }
       .tab-button:hover {
         background-color: #ddd;
       }
       .tab-button.active {
         background-color: #ccc;
+        font-weight: bold;
       }
       .tab-content {
         display: none;
-        padding: 6px 12px;
+        padding: 10px 15px;
         border: 1px solid #ccc;
         border-top: none;
       }
       .tab-content.active {
         display: block;
+      }
+      .save-section {
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #e8f4fd;
+        border-radius: 6px;
+      }
+      .save-message {
+        color: #2e7d32;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+      .history-section h3 {
+        color: #1976d2;
+        margin-top: 40px;
+        border-bottom: 2px solid #1976d2;
+        padding-bottom: 8px;
+      }
+      .history-section table th {
+        background-color: #e3f2fd;
+      }
+      .current-day {
+        color: #2e7d32;
+        font-weight: bold;
+        background-color: #e8f5e9;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 10px 0;
       }
     </style>
   </head>
@@ -99,6 +133,7 @@
       </button>
     </div>
 
+    <!-- LIVE TAB -->
     <div
       id="live"
       class="tab-content"
@@ -107,22 +142,17 @@
       <div class="search-box">
         <form method="get">
           <input type="hidden" name="tab" value="live" />
-
-          <label for="airline">Airline Name:</label>
-
-          <!-- Input kết hợp datalist -->
+          <label for="airline">Name of Airline:</label>
           <input
             type="text"
             id="airline"
             name="airline"
             th:value="${searchAirline}"
-            placeholder="Enter text or select airline..."
+            placeholder="Enter Name of airline or choose the list..."
             list="airlineSuggestions"
-            style="width: 320px; padding: 8px"
+            style="width: 340px; padding: 8px; margin-right: 10px"
             autocomplete="off"
           />
-
-          <!-- Danh sách gợi ý (dropdown) từ model -->
           <datalist id="airlineSuggestions">
             <option
               th:each="name : ${airlineNames}"
@@ -130,12 +160,18 @@
               th:text="${name}"
             ></option>
           </datalist>
-
           <button
             type="submit"
             name="action"
             value="search"
-            style="padding: 8px 16px; background: #2196f3; color: white"
+            style="
+              padding: 8px 18px;
+              background: #2196f3;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
           >
             Search
           </button>
@@ -143,34 +179,74 @@
             type="submit"
             name="action"
             value="fetch"
-            style="padding: 8px 16px; background: #4caf50; color: white"
+            style="
+              padding: 8px 18px;
+              background: #4caf50;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
           >
-            Fetch Data
+            Fetch_data_new
           </button>
           <button
             type="submit"
             name="action"
             value="clear"
-            style="padding: 8px 16px; background: #f44336; color: white"
+            style="
+              padding: 8px 18px;
+              background: #f44336;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
           >
             Return
           </button>
         </form>
       </div>
 
+      <!-- Save button -->
+      <div th:if="${searchAirline != ''}" class="save-section">
+        <form method="get">
+          <input type="hidden" name="airline" th:value="${searchAirline}" />
+          <input type="hidden" name="tab" value="live" />
+          <input type="hidden" name="action" value="save" />
+          <button
+            type="submit"
+            style="
+              padding: 10px 20px;
+              background: #ff9800;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              font-size: 16px;
+              cursor: pointer;
+            "
+          >
+            Save this Airline search
+          </button>
+        </form>
+        <div
+          th:if="${saveMessage}"
+          class="save-message"
+          th:text="${saveMessage}"
+        ></div>
+      </div>
+
       <div class="stats-container">
         <h3>
-          Results:
-          <span th:if="${#lists.isEmpty(flights)}">No flights found</span>
-          <span th:unless="${#lists.isEmpty(flights)}">
-            Found <b th:text="${flights.size()}"></b> flights
-          </span>
+          Result
+          <span th:if="${#lists.isEmpty(flights)}">: No flights found</span>
+          <span th:unless="${#lists.isEmpty(flights)}"
+            >: Found <b th:text="${flights.size()}"></b> flights</span
+          >
         </h3>
-
         <div class="status-stats" th:if="${not #lists.isEmpty(flights)}">
-          Total Flights: en-route:
-          <strong th:text="${statusEnRoute}"></strong> | landed:
-          <strong th:text="${statusLanded}"></strong> | scheduled:
+          Total: en-route: <strong th:text="${statusEnRoute}"></strong> |
+          landed: <strong th:text="${statusLanded}"></strong> | scheduled:
           <strong th:text="${statusScheduled}"></strong>
         </div>
       </div>
@@ -211,47 +287,119 @@
             <td th:text="${flight.alt ?: '-'}"></td>
             <td th:text="${flight.speed ?: '-'}"></td>
             <td th:text="${flight.status ?: '-'}"></td>
-            <td th:text="${flight.updated} ?: '-'"></td>
+            <td th:text="${flight.updatedFormatted} ?: '-'"></td>
           </tr>
         </tbody>
       </table>
+
+      <!-- HISTORY SECTION (separate, for previous days) -->
+      <div
+        th:if="${historicalSnapshots != null and not #lists.isEmpty(historicalSnapshots)}"
+        class="history-section"
+      >
+        <h3>
+          Data history saved for this airline
+          <span th:text="${searchAirline}"></span>
+        </h3>
+
+        <div
+          th:each="dayGroup : ${#lists.groupBy(historicalSnapshots, 'snapshotDate')}"
+        >
+          <div th:if="${dayGroup.key == #dates.today()}" class="current-day">
+            Current day (Today - <span th:text="${dayGroup.key}"></span>) (<span
+              th:text="${dayGroup.value.size()}"
+            ></span>
+            flights)
+          </div>
+          <div th:unless="${dayGroup.key == #dates.today()}">
+            <h4>
+              Day <span th:text="${dayGroup.key}"></span> (<span
+                th:text="${dayGroup.value.size()}"
+              ></span>
+              flights)
+            </h4>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Hex</th>
+                <th>Flight ICAO / IATA</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Fetch time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="snap : ${dayGroup.value}">
+                <td th:text="${snap.hex}"></td>
+                <td
+                  th:text="${snap.flightIcao} + ' / ' + ${snap.flightIata} ?: '-'"
+                ></td>
+                <td th:text="${snap.status ?: 'unknown'}"></td>
+                <td
+                  th:text="${snap.updatedAt != null} ? ${#dates.format(new java.util.Date(snap.updatedAt), 'dd/MM/yyyy HH:mm:ss')} : '-'"
+                ></td>
+                <td
+                  th:text="${snap.fetchedAt != null} ? ${#dates.format(new java.util.Date(snap.fetchedAt), 'dd/MM/yyyy HH:mm:ss')} : '-'"
+                ></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p th:if="${searchAirline != '' and #lists.isEmpty(historicalSnapshots)}">
+        No historical data has been saved for this airline yet.
+      </p>
     </div>
 
+    <!-- DELAYED TAB -->
     <div
       id="delayed"
       class="tab-content"
       th:classappend="${tab == 'delayed' ? 'active' : ''}"
     >
       <h2>Delayed Flights (min 30 min)</h2>
-
-      <div style="margin-bottom: 15px">
+      <div style="margin-bottom: 20px">
         <a
           th:href="@{/(tab=delayed,delayType=departures)}"
           th:classappend="${delayType == 'departures' ? 'highlight' : ''}"
+          style="margin-right: 10px"
+          onclick="openTab('delayed')"
           >Departures</a
         >
         |
         <a
           th:href="@{/(tab=delayed,delayType=arrivals)}"
           th:classappend="${delayType == 'arrivals' ? 'highlight' : ''}"
+          style="margin-left: 10px"
+          onclick="openTab('delayed')"
           >Arrivals</a
         >
-        <form method="get" style="display: inline; margin-left: 20px">
+        <form method="get" style="display: inline; margin-left: 30px">
           <input type="hidden" name="tab" value="delayed" />
           <input type="hidden" name="delayType" th:value="${delayType}" />
           <button
             type="submit"
             name="action"
             value="fetch"
-            style="padding: 8px 16px; background: #4caf50; color: white"
+            style="
+              padding: 8px 18px;
+              background: #4caf50;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
           >
             Fetch Data
           </button>
         </form>
       </div>
-
-      <h3>Total Delayed Flights: <span th:text="${totalDelayed}"></span></h3>
-
+      <h3>
+        Total Delayed Flights: <span th:text="${totalDelayed ?: 0}"></span>
+      </h3>
       <table th:if="${not #lists.isEmpty(delayedFlights)}">
         <thead>
           <tr>
@@ -270,29 +418,30 @@
         </thead>
         <tbody>
           <tr th:each="flight : ${delayedFlights}">
-            <td th:text="${flight.flightIata}"></td>
+            <td th:text="${flight.flightIata ?: '-'}"></td>
             <td
-              th:text="${flight.airlineIata} + ' (' + ${flight.airlineIcao} + ')'"
+              th:text="${flight.airlineIata} + ' (' + ${flight.airlineIcao ?: '-'} + ')'"
             ></td>
-            <td th:text="${flight.depIata} + ' → ' + ${flight.arrIata}"></td>
+            <td
+              th:text="${flight.depIata ?: '-'} + ' → ' + ${flight.arrIata ?: '-'}"
+            ></td>
             <td
               th:text="${flight.depTime} + ' / ' + ${flight.depEstimated ?: '-'}"
             ></td>
             <td
               th:text="${flight.arrTime} + ' / ' + ${flight.arrEstimated ?: '-'}"
             ></td>
-            <td th:text="${flight.delayed}"></td>
+            <td th:text="${flight.delayed ?: 0}"></td>
             <td th:text="${flight.depDelayed ?: '-'}"></td>
             <td th:text="${flight.arrDelayed ?: '-'}"></td>
-            <td th:text="${flight.status}"></td>
+            <td th:text="${flight.status ?: '-'}"></td>
             <td
-              th:text="${flight.depTerminal} + '/' + ${flight.depGate} + ' | ' + ${flight.arrTerminal} + '/' + ${flight.arrGate}"
+              th:text="${flight.depTerminal ?: '-'} / ${flight.depGate ?: '-'} | ${flight.arrTerminal ?: '-'} / ${flight.arrGate ?: '-'}"
             ></td>
             <td th:text="${flight.aircraftIcao ?: '-'}"></td>
           </tr>
         </tbody>
       </table>
-
       <p th:if="${#lists.isEmpty(delayedFlights)}">No delayed flights found.</p>
     </div>
 
@@ -307,8 +456,15 @@
           buttons[i].classList.remove("active");
         }
         document.getElementById(tabName).classList.add("active");
-        event.currentTarget.classList.add("active");
+        document
+          .querySelector(`.tab-button[onclick="openTab('${tabName}')"]`)
+          .classList.add("active");
       }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        var activeTab = /*[[${tab}]]*/ "live";
+        openTab(activeTab);
+      });
     </script>
   </body>
 </html>

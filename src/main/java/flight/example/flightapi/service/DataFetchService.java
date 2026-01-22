@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -45,6 +46,7 @@ public class DataFetchService {
    @Value("${api.airlines.url}")
    private String airlinesUrl;
 
+   @Cacheable(value = "liveFlights", key = "#airlineName", condition = "#airlineName != null and !#airlineName.isEmpty()")
    public List<FlightData> fetchLiveFlights(String airlineName) {
       try {
          ObjectMapper mapper = new ObjectMapper();

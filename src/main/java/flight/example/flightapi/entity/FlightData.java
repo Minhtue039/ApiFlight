@@ -1,6 +1,6 @@
 package flight.example.flightapi.entity;
 
-// import java.time.Instant;
+import org.springframework.data.annotation.Transient;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,9 +16,35 @@ public class FlightData {
    @Column(unique = true, nullable = false, length = 10)
    private String hex;
 
+   @Column
+   private Long fetchedAt;
+
    @PrePersist
+   public void onCreate() {
+      normalizeHex();
+      if (this.fetchedAt == null) {
+         this.fetchedAt = System.currentTimeMillis();
+      }
+   }
+
+   @Transient
+   private String updatedFormatted;
+
+   public String getUpdatedFormatted() {
+      return updatedFormatted;
+   }
+
+   public void setUpdatedFormatted(String updatedFormatted) {
+      this.updatedFormatted = updatedFormatted;
+   }
+
    @PreUpdate
-   public void normalizeHex() {
+   public void onUpdate() {
+      normalizeHex();
+      this.fetchedAt = System.currentTimeMillis(); // update timestamp every time entity is modified
+   }
+
+   private void normalizeHex() {
       if (this.hex != null) {
          this.hex = this.hex.trim().toUpperCase();
       }
@@ -52,6 +78,14 @@ public class FlightData {
    private String name;
 
    // Getters and Setters
+   public Long getFetchedAt() {
+      return fetchedAt;
+   }
+
+   public void setFetchedAt(Long fetchedAt) {
+      this.fetchedAt = fetchedAt;
+   }
+
    public String getHex() {
       return hex;
    }
