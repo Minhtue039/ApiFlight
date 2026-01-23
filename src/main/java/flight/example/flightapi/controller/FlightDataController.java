@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import flight.example.flightapi.dto.DelayFlightResponse;
 import flight.example.flightapi.entity.AirlineFlightSnapshot;
@@ -43,12 +44,12 @@ public class FlightDataController {
          @RequestParam(value = "delayType", required = false, defaultValue = "departures") String delayType,
          @RequestParam(value = "action", required = false, defaultValue = "") String action,
          HttpSession session,
-         Model model) {
+         Model model,
+         RedirectAttributes redirectAttributes) {
 
       String effectiveAirline = airlineName.trim();
 
       if ("delayed".equals(tab)) {
-         // ... phần delayed giữ nguyên ...
          String sessionKey = "delayedFlights_" + delayType;
          List<DelayFlightResponse> delayedFlights = (List<DelayFlightResponse>) session.getAttribute(sessionKey);
 
@@ -67,36 +68,30 @@ public class FlightDataController {
 
          List<FlightData> fullFlights = (List<FlightData>) session.getAttribute("fullFlights");
 
-         // Fetch full nếu cần (chỉ khi fetch hoặc chưa có)
          if ("fetch".equals(action) || fullFlights == null || fullFlights.isEmpty()) {
             fullFlights = dataFetchService.fetchLiveFlights("");
             session.setAttribute("fullFlights", fullFlights);
-            effectiveAirline = ""; // reset search khi fetch mới
             log.info("Fetched full flights: {} total", fullFlights.size());
          }
 
-         // Khởi tạo displayedFlights từ full
          List<FlightData> displayedFlights = fullFlights;
+         String searchAirline = effectiveAirline;
 
-         if (!effectiveAirline.isEmpty() && !"save".equals(action)) { // chỉ lọc nếu không phải save (save đã lọc riêng)
-            String search = effectiveAirline.toLowerCase();
-            displayedFlights = fullFlights.stream()
-                  .filter(f -> f.getName() != null && f.getName().toLowerCase().contains(search))
-                  .collect(Collectors.toList());
-         }
-
-         // Nếu có search → lọc displayed
-         if ("search".equals(action) && !effectiveAirline.isEmpty()) {
-            String search = effectiveAirline.toLowerCase();
-            displayedFlights = fullFlights.stream()
-                  .filter(f -> f.getName() != null && f.getName().toLowerCase().contains(search))
-                  .collect(Collectors.toList());
-            log.info("Search '{}' → found {} displayed flights (total full: {})",
-                  effectiveAirline, displayedFlights.size(), fullFlights.size());
-         } else if ("clear".equals(action)) {
+         // ƯU TIÊN: Nếu action = clear → luôn hiển thị full, xóa airline
+         if ("clear".equals(action)) {
+            searchAirline = "";
             effectiveAirline = "";
             displayedFlights = fullFlights;
-            log.info("Cleared search → showing all {} flights", fullFlights.size());
+            log.info("Return/Clear clicked → showing all {} flights", fullFlights.size());
+         }
+         // Chỉ lọc nếu có airline VÀ KHÔNG PHẢI clear
+         else if (!effectiveAirline.isEmpty()) {
+            String search = effectiveAirline.toLowerCase();
+            displayedFlights = fullFlights.stream()
+                  .filter(f -> f.getName() != null && f.getName().toLowerCase().contains(search))
+                  .collect(Collectors.toList());
+            log.info("Filtered for '{}': {} flights (full: {})", effectiveAirline, displayedFlights.size(),
+                  fullFlights.size());
          }
 
          // Gợi ý hãng từ full
@@ -107,48 +102,47 @@ public class FlightDataController {
                .sorted()
                .collect(Collectors.toList());
 
-         // Thống kê status từ displayed
+         // Lấy lịch sử
+         List<AirlineFlightSnapshot> snapshots = snapshotService.getSnapshotsForAirline(effectiveAirline);
+
+         // Merge nếu có airline (sau clear thì không merge)
+         if (!effectiveAirline.isEmpty()) {
+            displayedFlights = snapshotService.mergeWithHistorical(displayedFlights, snapshots, effectiveAirline);
+         }
+
+         // Thống kê
          Map<String, Long> statusCount = displayedFlights.stream()
                .filter(f -> f.getStatus() != null)
                .collect(Collectors.groupingBy(FlightData::getStatus, Collectors.counting()));
 
-         // SAVE: LUÔN dùng displayedFlights (đã filtered nếu search)
+         // SAVE
          if ("save".equals(action) && StringUtils.isNotBlank(effectiveAirline)) {
-            // Buộc lọc lại để chắc chắn
-            String search = effectiveAirline.toLowerCase();
-            List<FlightData> flightsToSave = fullFlights.stream()
-                  .filter(f -> f.getName() != null && f.getName().toLowerCase().contains(search))
-                  .collect(Collectors.toList());
+            snapshotService.saveOrUpdateSnapshot(effectiveAirline, displayedFlights);
+            redirectAttributes.addFlashAttribute("saveMessage",
+                  "Đã lưu/cập nhật " + displayedFlights.size() + " chuyến bay cho hãng " + effectiveAirline
+                        + " hôm nay!");
+            log.info("Saved snapshot for airline: {} ({} flights)", effectiveAirline, displayedFlights.size());
 
-            if (flightsToSave.isEmpty()) {
-               model.addAttribute("saveMessage", "Không có chuyến bay nào để lưu cho hãng " + effectiveAirline);
-            } else {
-               snapshotService.saveOrUpdateSnapshot(effectiveAirline, flightsToSave);
-               model.addAttribute("saveMessage", "Đã lưu/cập nhật " + flightsToSave.size() + " chuyến bay cho hãng "
-                     + effectiveAirline + " hôm nay!");
-               log.info("Saved snapshot for airline: {} ({} filtered flights)", effectiveAirline, flightsToSave.size());
-            }
-
-            // REDIRECT sau save để giữ trạng thái search
-            return "redirect:/?airline=" + effectiveAirline + "&tab=live&action=search";
+            return "redirect:/?airline=" + effectiveAirline + "&tab=live";
          }
 
-         // Lấy lịch sử
-         List<AirlineFlightSnapshot> snapshots = snapshotService.getSnapshotsForAirline(effectiveAirline);
-
-         // Format updated
+         // Format
          displayedFlights.forEach(flight -> {
             if (flight.getUpdated() != null) {
                java.util.Date date = new java.util.Date(flight.getUpdated());
                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM HH:mm");
                flight.setUpdatedFormatted(sdf.format(date));
+            } else {
+               flight.setUpdatedFormatted("-");
+            }
+            if (flight.getSnapshotDateFormatted() == null) {
+               flight.setSnapshotDateFormatted("Today");
             }
          });
 
-         // Model: dùng displayedFlights (đã filtered hoặc full)
          model.addAttribute("flights", displayedFlights);
          model.addAttribute("historicalSnapshots", snapshots);
-         model.addAttribute("searchAirline", effectiveAirline);
+         model.addAttribute("searchAirline", searchAirline); // dùng searchAirline để hiển thị input đúng
          model.addAttribute("totalFlights", displayedFlights.size());
          model.addAttribute("airlineNames", airlineNames);
          model.addAttribute("statusEnRoute", statusCount.getOrDefault("en-route", 0L));

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flight Data Viewer</title>
     <style>
+      /* Giữ nguyên style cũ của bạn */
       body {
         font-family: Arial, Helvetica, sans-serif;
         margin: 20px;
@@ -266,6 +267,7 @@
             <th>Speed (kt)</th>
             <th>Status</th>
             <th>Updated</th>
+            <th>Snapshot Date</th>
           </tr>
         </thead>
         <tbody>
@@ -288,11 +290,12 @@
             <td th:text="${flight.speed ?: '-'}"></td>
             <td th:text="${flight.status ?: '-'}"></td>
             <td th:text="${flight.updatedFormatted} ?: '-'"></td>
+            <td th:text="${flight.snapshotDateFormatted} ?: '-'"></td>
           </tr>
         </tbody>
       </table>
 
-      <!-- HISTORY SECTION (separate, for previous days) -->
+      <!-- HISTORY SECTION -->
       <div
         th:if="${historicalSnapshots != null and not #lists.isEmpty(historicalSnapshots)}"
         class="history-section"
@@ -301,17 +304,19 @@
           Data history saved for this airline
           <span th:text="${searchAirline}"></span>
         </h3>
-
         <div
           th:each="dayGroup : ${#lists.groupBy(historicalSnapshots, 'snapshotDate')}"
         >
-          <div th:if="${dayGroup.key == #dates.today()}" class="current-day">
+          <div
+            th:if="${dayGroup.key == #temporals.today()}"
+            class="current-day"
+          >
             Current day (Today - <span th:text="${dayGroup.key}"></span>) (<span
               th:text="${dayGroup.value.size()}"
             ></span>
             flights)
           </div>
-          <div th:unless="${dayGroup.key == #dates.today()}">
+          <div th:unless="${dayGroup.key == #temporals.today()}">
             <h4>
               Day <span th:text="${dayGroup.key}"></span> (<span
                 th:text="${dayGroup.value.size()}"
@@ -334,15 +339,13 @@
               <tr th:each="snap : ${dayGroup.value}">
                 <td th:text="${snap.hex}"></td>
                 <td
-                  th:text="${snap.flightIcao} + ' / ' + ${snap.flightIata} ?: '-'"
+                  th:text="${snap.flightIcao ?: '-'} + ' / ' + ${snap.flightIata ?: '-'}"
                 ></td>
                 <td th:text="${snap.status ?: 'unknown'}"></td>
-                <td
-                  th:text="${snap.updatedAt != null} ? ${#dates.format(new java.util.Date(snap.updatedAt), 'dd/MM/yyyy HH:mm:ss')} : '-'"
-                ></td>
-                <td
-                  th:text="${snap.fetchedAt != null} ? ${#dates.format(new java.util.Date(snap.fetchedAt), 'dd/MM/yyyy HH:mm:ss')} : '-'"
-                ></td>
+                <td th:text="${snap.updatedFormatted ?: '-'}"></td>
+                <!-- Sử dụng transient đã format từ controller -->
+                <td th:text="${snap.fetchedFormatted ?: '-'}"></td>
+                <!-- Nếu có field fetchedFormatted -->
               </tr>
             </tbody>
           </table>
@@ -420,23 +423,23 @@
           <tr th:each="flight : ${delayedFlights}">
             <td th:text="${flight.flightIata ?: '-'}"></td>
             <td
-              th:text="${flight.airlineIata} + ' (' + ${flight.airlineIcao ?: '-'} + ')'"
+              th:text="${flight.airlineIata ?: '-'} + ' (' + ${flight.airlineIcao ?: '-'} + ')'"
             ></td>
             <td
               th:text="${flight.depIata ?: '-'} + ' → ' + ${flight.arrIata ?: '-'}"
             ></td>
             <td
-              th:text="${flight.depTime} + ' / ' + ${flight.depEstimated ?: '-'}"
+              th:text="${flight.depTime ?: '-'} + ' / ' + ${flight.depEstimated ?: '-'}"
             ></td>
             <td
-              th:text="${flight.arrTime} + ' / ' + ${flight.arrEstimated ?: '-'}"
+              th:text="${flight.arrTime ?: '-'} + ' / ' + ${flight.arrEstimated ?: '-'}"
             ></td>
             <td th:text="${flight.delayed ?: 0}"></td>
             <td th:text="${flight.depDelayed ?: '-'}"></td>
             <td th:text="${flight.arrDelayed ?: '-'}"></td>
             <td th:text="${flight.status ?: '-'}"></td>
             <td
-              th:text="${flight.depTerminal ?: '-'} / ${flight.depGate ?: '-'} | ${flight.arrTerminal ?: '-'} / ${flight.arrGate ?: '-'}"
+              th:text="${flight.depTerminal ?: '-'} + '/' + ${flight.depGate ?: '-'} + ' | ' + ${flight.arrTerminal ?: '-'} + '/' + ${flight.arrGate ?: '-'}"
             ></td>
             <td th:text="${flight.aircraftIcao ?: '-'}"></td>
           </tr>
@@ -462,7 +465,7 @@
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-        var activeTab = /*[[${tab}]]*/ "live";
+        var activeTab = "[[${tab}]]" || "live"; // fallback nếu parse thất bại
         openTab(activeTab);
       });
     </script>

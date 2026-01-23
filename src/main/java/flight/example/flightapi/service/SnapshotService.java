@@ -53,10 +53,21 @@ public class SnapshotService {
 
          if (existingOpt.isPresent()) {
             AirlineFlightSnapshot existing = existingOpt.get();
-            if (!existing.getStatus().equals(flight.getStatus())) { // update chỉ nếu status change
+            if (!existing.getStatus().equals(flight.getStatus())) {
                existing.setStatus(flight.getStatus());
                existing.setFetchedAt(flight.getFetchedAt());
                existing.setUpdatedAt(now);
+               existing.setRegNumber(flight.getRegNumber());
+               existing.setFlag(flight.getFlag());
+               existing.setLat(flight.getLat());
+               existing.setLng(flight.getLng());
+               existing.setAlt(flight.getAlt());
+               existing.setSpeed(flight.getSpeed());
+               existing.setFlightIcao(flight.getFlightIcao());
+               existing.setFlightIata(flight.getFlightIata());
+               existing.setDepIata(flight.getDepIata());
+               existing.setArrIata(flight.getArrIata());
+               existing.setAircraftIcao(flight.getAircraftIcao());
                try {
                   existing.setFlightJson(objectMapper.writeValueAsString(flight));
                } catch (JacksonException e) {
@@ -65,17 +76,23 @@ public class SnapshotService {
                }
                repository.save(existing);
                updateCount++;
-               log.debug("Updated snapshot for airline '{}' hex '{}' on {} (status changed)", airlineName, hex, today);
-            } else {
-               log.debug("Skipped update for airline '{}' hex '{}' on {} (no status change)", airlineName, hex, today);
             }
          } else {
             AirlineFlightSnapshot snapshot = new AirlineFlightSnapshot();
             snapshot.setAirlineName(airlineName.trim());
             snapshot.setSnapshotDate(today);
             snapshot.setHex(hex);
+            snapshot.setRegNumber(flight.getRegNumber());
+            snapshot.setFlag(flight.getFlag());
+            snapshot.setLat(flight.getLat());
+            snapshot.setLng(flight.getLng());
+            snapshot.setAlt(flight.getAlt());
+            snapshot.setSpeed(flight.getSpeed());
             snapshot.setFlightIcao(flight.getFlightIcao());
             snapshot.setFlightIata(flight.getFlightIata());
+            snapshot.setDepIata(flight.getDepIata());
+            snapshot.setArrIata(flight.getArrIata());
+            snapshot.setAircraftIcao(flight.getAircraftIcao());
             snapshot.setStatus(flight.getStatus());
             snapshot.setFetchedAt(flight.getFetchedAt());
             snapshot.setUpdatedAt(now);
@@ -87,7 +104,6 @@ public class SnapshotService {
             }
             repository.save(snapshot);
             newCount++;
-            log.debug("Saved new snapshot for airline '{}' hex '{}' on {}", airlineName, hex, today);
          }
       }
 
@@ -147,13 +163,41 @@ public class SnapshotService {
    private FlightData convertSnapshotToFlightData(AirlineFlightSnapshot snapshot) {
       FlightData flight = new FlightData();
       flight.setHex(snapshot.getHex());
+      flight.setRegNumber(snapshot.getRegNumber());
+      flight.setFlag(snapshot.getFlag());
+      flight.setLat(snapshot.getLat());
+      flight.setLng(snapshot.getLng());
+      flight.setAlt(snapshot.getAlt());
+      flight.setSpeed(snapshot.getSpeed());
       flight.setFlightIcao(snapshot.getFlightIcao());
       flight.setFlightIata(snapshot.getFlightIata());
+      flight.setDepIata(snapshot.getDepIata());
+      flight.setArrIata(snapshot.getArrIata());
+      flight.setAircraftIcao(snapshot.getAircraftIcao());
       flight.setStatus(snapshot.getStatus());
       flight.setName(snapshot.getAirlineName());
       flight.setUpdated(snapshot.getUpdatedAt());
       flight.setFetchedAt(snapshot.getFetchedAt());
-      // Add more fields if needed from flightJson if you parse it
+
+      // Nếu thiếu trường, parse từ flightJson
+      if (snapshot.getFlightJson() != null && !snapshot.getFlightJson().equals("{}")) {
+         try {
+            FlightData parsed = objectMapper.readValue(snapshot.getFlightJson(), FlightData.class);
+            // Copy các trường còn thiếu nếu cần
+            if (flight.getType() == null)
+               flight.setType(parsed.getType());
+            // ... thêm các trường khác nếu bạn muốn
+         } catch (JacksonException e) {
+            log.warn("Parse flightJson failed for hex: {}", snapshot.getHex(), e);
+         }
+      }
+
+      // Set snapshot date formatted
+      if (snapshot.getSnapshotDate() != null) {
+         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+         flight.setSnapshotDateFormatted(snapshot.getSnapshotDate().format(formatter));
+      }
+
       return flight;
    }
 }

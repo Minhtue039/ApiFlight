@@ -38,6 +38,17 @@ public class FlightData {
       this.updatedFormatted = updatedFormatted;
    }
 
+   @Transient
+   private String snapshotDateFormatted;
+
+   public String getSnapshotDateFormatted() {
+      return snapshotDateFormatted;
+   }
+
+   public void setSnapshotDateFormatted(String snapshotDateFormatted) {
+      this.snapshotDateFormatted = snapshotDateFormatted;
+   }
+
    @PreUpdate
    public void onUpdate() {
       normalizeHex();

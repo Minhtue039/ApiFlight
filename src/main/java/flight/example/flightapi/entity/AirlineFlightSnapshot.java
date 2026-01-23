@@ -1,46 +1,81 @@
 package flight.example.flightapi.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDate;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Entity
 @Table(name = "flight_day", uniqueConstraints = @UniqueConstraint(columnNames = { "airline_name", "snapshot_date",
-      "hex" }))
+            "hex" }))
 @Getter
 @Setter
 public class AirlineFlightSnapshot {
 
-   @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
-   private Long id;
+      @Id
+      @GeneratedValue(strategy = GenerationType.IDENTITY)
+      private Long id;
 
-   @Column(name = "airline_name", nullable = false)
-   private String airlineName;
+      @Column(name = "airline_name", nullable = false)
+      private String airlineName;
 
-   @Column(name = "snapshot_date", nullable = false)
-   private LocalDate snapshotDate;
+      @Column(name = "snapshot_date", nullable = false)
+      private LocalDate snapshotDate;
 
-   @Column(nullable = false)
-   private String hex;
+      @Column(nullable = false)
+      private String hex;
 
-   @Column
-   private String flightIcao;
+      // Các trường chính từ FlightData
+      @Column
+      private String regNumber;
 
-   @Column
-   private String flightIata;
+      @Column
+      private String flag;
 
-   @Column
-   private String status;
+      @Column
+      private Double lat;
 
-   @Column(columnDefinition = "TEXT")
-   private String flightJson;
+      @Column
+      private Double lng;
 
-   @Column
-   private Long fetchedAt;
+      @Column
+      private Integer alt;
 
-   @Column
-   private Long updatedAt; // Để track thời điểm update cuối cùng
+      @Column
+      private Integer speed;
+
+      @Column
+      private String flightIcao;
+
+      @Column
+      private String flightIata;
+
+      @Column
+      private String depIata;
+
+      @Column
+      private String arrIata;
+
+      @Column
+      private String status;
+
+      @Column
+      private Long fetchedAt;
+
+      @Column
+      private Long updatedAt;
+
+      @Column
+      private String aircraftIcao;
+
+      @Column(columnDefinition = "TEXT")
+      private String flightJson;
+      // ... thêm các trường khác nếu cần
 }
