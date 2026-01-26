@@ -57,7 +57,7 @@ jobs:
             docker pull minhtue039/flightapi:qa-latest
 
             # Dừng & xóa container QA cũ
-            docker-compose -f docker-compose.qa.yml down
+            docker-compose down
 
             # Chạy container QA mới
             docker-compose -f docker-compose.qa.yml up -d
