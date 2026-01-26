@@ -2,7 +2,7 @@ name: Build & Deploy Spring Boot to VPS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ QA ]
   workflow_dispatch:
 
 jobs:
