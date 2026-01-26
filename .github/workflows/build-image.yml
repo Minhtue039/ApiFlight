@@ -69,6 +69,6 @@ jobs:
               -e SPRING_PROFILES_ACTIVE=prod \
               # Thêm các env khác nếu cần, ví dụ DB
               # -e SPRING_DATASOURCE_URL=...
-              ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
+              ${{ secrets.DOCKERHUB_USERNAME }}/flightapi-QA:latest
 
             echo "Deployment completed!"
