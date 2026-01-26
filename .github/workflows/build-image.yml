@@ -55,7 +55,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             # Pull image mới nhất
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/flightapi-QA:latest
 
             # Dừng và xóa container cũ (nếu có)
             docker stop flightapi || true
