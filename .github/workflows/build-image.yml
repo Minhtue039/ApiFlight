@@ -58,12 +58,12 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/flightapi-QA:latest
 
             # Dừng và xóa container cũ (nếu có)
-            docker stop flightapi || true
-            docker rm flightapi || true
+            docker stop flightapi-QA || true
+            docker rm flightapi-QA || true
 
             # Chạy container mới
             docker run -d \
-              --name flightapi \
+              --name flightapi-QA \
               --restart unless-stopped \
               -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
