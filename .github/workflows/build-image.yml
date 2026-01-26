@@ -39,7 +39,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/flightapi-QA:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/flightapiQA:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/flightapi-QA:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
