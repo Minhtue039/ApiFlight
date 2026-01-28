@@ -29,6 +29,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set image metadata
+        run: |
+          echo "DATE=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -37,7 +42,12 @@ jobs:
           push: true
           tags: |
             minhtue039/flightapi:qa-latest
-            minhtue039/flightapi:qa-${{ github.sha }}
+            minhtue039/flightapi:qa-${{ env.DATE }}-${{ github.actor }}-${{ env.SHORT_SHA }}
+          labels: |
+            org.opencontainers.image.created=${{ env.DATE }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.authors=${{ github.actor }}
 
   deploy:
     needs: build-and-push
