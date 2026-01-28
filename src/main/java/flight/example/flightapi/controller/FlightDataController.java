@@ -83,6 +83,7 @@ public class FlightDataController {
             effectiveAirline = "";
             displayedFlights = fullFlights;
             log.info("Return/Clear clicked → showing all {} flights", fullFlights.size());
+            log.info("Cleared airline filter, showing all flights: {} total", fullFlights.size());
          }
          // Chỉ lọc nếu có airline VÀ KHÔNG PHẢI clear
          else if (!effectiveAirline.isEmpty()) {
