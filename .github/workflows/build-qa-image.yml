@@ -2,20 +2,25 @@ name: Build & Deploy QA
 
 on:
   push:
-    branches: [ QA ]
+    branches: [QA]
   workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
 
       - name: Build with Maven
         run: mvn clean package -DskipTests
@@ -29,31 +34,33 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set image metadata
+      - name: Generate image tag
+        id: meta
         run: |
-          echo "DATE=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
-          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          IMAGE_TAG=qa-$(date +'%Y%m%d-%H%M')
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Build and push
+      - name: Build & Push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: |
-            minhtue039/flightapi:qa-latest
-            minhtue039/flightapi:qa-${{ env.DATE }}-${{ github.actor }}-${{ env.SHORT_SHA }}
+            minhtue039/flightapi:${{ env.IMAGE_TAG }}
           labels: |
-            org.opencontainers.image.created=${{ env.DATE }}
+            org.opencontainers.image.created=${{ github.run_id }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=${{ github.repository }}
-            org.opencontainers.image.authors=${{ github.actor }}
+            org.opencontainers.image.ref.name=QA
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
-      - name: Deploy to VPS
+      - name: Deploy to QA VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -63,13 +70,14 @@ jobs:
           script: |
             cd ~/flightapi
 
-            # Pull image QA
-            docker pull minhtue039/flightapi:qa-latest
+            IMAGE_TAG=${{ needs.build-and-push.outputs.image_tag }}
 
-            # Dừng & xóa container QA cũ
+            echo "🚀 Deploying image: $IMAGE_TAG"
+
+            docker pull minhtue039/flightapi:$IMAGE_TAG
+
             docker-compose -f docker-compose.qa.yml down
 
-            # Chạy container QA mới
-            docker-compose -f docker-compose.qa.yml up -d
+            IMAGE_TAG=$IMAGE_TAG docker-compose -f docker-compose.qa.yml up -d
 
-            echo "✅ QA deployment completed on port 3000"
+            echo "✅ QA deployment completed on Port 3000 ..."

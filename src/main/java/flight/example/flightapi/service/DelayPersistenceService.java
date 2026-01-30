@@ -147,6 +147,6 @@ public class DelayPersistenceService {
       target.setDelayed(src.getDelayed());
       target.setArrDelayed(src.getArrDelayed());
       target.setAircraftIcao(src.getAircraftIcao());
-      // fetchedAt được set riêng ở trên
+      // fetchedAt được set riêng ở phần trên
    }
 }
