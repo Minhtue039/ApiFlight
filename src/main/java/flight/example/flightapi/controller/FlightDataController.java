@@ -1,5 +1,7 @@
 package flight.example.flightapi.controller;
 
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -105,6 +107,18 @@ public class FlightDataController {
          // Lấy lịch sử
          List<AirlineFlightSnapshot> snapshots = snapshotService.getSnapshotsForAirline(effectiveAirline);
 
+         // Tạo map đã group theo ngày
+         Map<LocalDate, List<AirlineFlightSnapshot>> groupedSnapshots = snapshots.stream()
+               .collect(Collectors.groupingBy(AirlineFlightSnapshot::getSnapshotDate));
+
+         // Sắp xếp theo ngày giảm dần (mới nhất trước)
+         Map<LocalDate, List<AirlineFlightSnapshot>> sortedGrouped = groupedSnapshots.entrySet().stream()
+               .sorted(Map.Entry.<LocalDate, List<AirlineFlightSnapshot>>comparingByKey().reversed())
+               .collect(Collectors.toMap(
+                     Map.Entry::getKey,
+                     Map.Entry::getValue,
+                     (e1, e2) -> e1, LinkedHashMap::new));
+
          // Merge nếu có airline (sau clear thì không merge)
          if (!effectiveAirline.isEmpty()) {
             displayedFlights = snapshotService.mergeWithHistorical(displayedFlights, snapshots, effectiveAirline);
@@ -141,6 +155,7 @@ public class FlightDataController {
          });
 
          model.addAttribute("flights", displayedFlights);
+         model.addAttribute("groupedHistoricalSnapshots", sortedGrouped);
          model.addAttribute("historicalSnapshots", snapshots);
          model.addAttribute("searchAirline", searchAirline); // dùng searchAirline để hiển thị input đúng
          model.addAttribute("totalFlights", displayedFlights.size());
