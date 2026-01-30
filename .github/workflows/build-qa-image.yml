@@ -80,4 +80,4 @@ jobs:
 
             IMAGE_TAG=$IMAGE_TAG docker-compose -f docker-compose.qa.yml up -d
 
-            echo "✅ QA deployment completed on Port 3000"
+            echo "✅ QA deployment completed on Port 3000 ..."
