@@ -27,7 +27,7 @@ public class FlightDataSyncScheduler {
     * Auto fetch live flights (toàn bộ) và delayed flights (cả departures +
     * arrivals)
     * mỗi 30 phút.
-    *
+    * aa
     * fixedRate = 1800000 ms = 30 phút
     * initialDelay = 60000 ms = chờ 1 phút sau khi app start để tránh fetch ngay
     * lập tức
