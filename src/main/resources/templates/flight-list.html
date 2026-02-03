@@ -297,29 +297,26 @@
 
       <!-- HISTORY SECTION -->
       <div
-        th:if="${historicalSnapshots != null and not #lists.isEmpty(historicalSnapshots)}"
+        th:if="${groupedHistoricalSnapshots != null and not #maps.isEmpty(groupedHistoricalSnapshots)}"
         class="history-section"
       >
         <h3>
           Data history saved for this airline
           <span th:text="${searchAirline}"></span>
         </h3>
-        <div
-          th:each="dayGroup : ${#lists.groupBy(historicalSnapshots, 'snapshotDate')}"
-        >
-          <div
-            th:if="${dayGroup.key == #temporals.today()}"
-            class="current-day"
-          >
-            Current day (Today - <span th:text="${dayGroup.key}"></span>) (<span
-              th:text="${dayGroup.value.size()}"
+
+        <div th:each="entry : ${groupedHistoricalSnapshots}">
+          <div th:if="${entry.key == #temporals.today()}" class="current-day">
+            Current day (Today - <span th:text="${entry.key}"></span>) (<span
+              th:text="${entry.value.size()}"
             ></span>
             flights)
           </div>
-          <div th:unless="${dayGroup.key == #temporals.today()}">
+
+          <div th:unless="${entry.key == #temporals.today()}">
             <h4>
-              Day <span th:text="${dayGroup.key}"></span> (<span
-                th:text="${dayGroup.value.size()}"
+              Day <span th:text="${entry.key}"></span> (<span
+                th:text="${entry.value.size()}"
               ></span>
               flights)
             </h4>
@@ -336,16 +333,14 @@
               </tr>
             </thead>
             <tbody>
-              <tr th:each="snap : ${dayGroup.value}">
+              <tr th:each="snap : ${entry.value}">
                 <td th:text="${snap.hex}"></td>
                 <td
                   th:text="${snap.flightIcao ?: '-'} + ' / ' + ${snap.flightIata ?: '-'}"
                 ></td>
                 <td th:text="${snap.status ?: 'unknown'}"></td>
                 <td th:text="${snap.updatedFormatted ?: '-'}"></td>
-                <!-- Sử dụng transient đã format từ controller -->
                 <td th:text="${snap.fetchedFormatted ?: '-'}"></td>
-                <!-- Nếu có field fetchedFormatted -->
               </tr>
             </tbody>
           </table>
