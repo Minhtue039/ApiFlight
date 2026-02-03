@@ -40,6 +40,9 @@ public class DataFetchService {
    @Autowired
    private FlightPersistenceService persistenceService;
 
+   @Autowired
+   private FlightNatsPublisherService natsPublisher;
+
    @Value("${api.flights.url}")
    private String flightsUrl;
 
@@ -145,6 +148,7 @@ public class DataFetchService {
          }
 
          persistenceService.saveFlightsAsync(flights);
+         natsPublisher.publishFlightBatch(flights);
          log.info("Fetched {} flights from API", flights.size());
          return result;
       } catch (IllegalArgumentException | RestClientException | JacksonException e) {
