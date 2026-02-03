@@ -2,12 +2,15 @@ name: Build & Deploy Spring Boot to VPS
 
 on:
   push:
-    branches: [ Prod ]
+    branches: [Prod]
   workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
 
     steps:
       - name: Checkout code
@@ -16,8 +19,8 @@ jobs:
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
 
       - name: Build with Maven
         run: mvn clean package -DskipTests
@@ -31,15 +34,26 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Generate image tag
+        id: meta
+        run: |
+          IMAGE_TAG=prod-$(date +'%Y%m%d-%H%M')
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Build & Push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/flightapi:${{ env.IMAGE_TAG }}
+          labels: |
+            org.opencontainers.image.created=${{ github.run_id }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.ref.name=Prod
 
   # deploy:
   #   runs-on: ubuntu-latest
