@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,9 @@ import tools.jackson.databind.exc.JsonNodeException;
 
 @Service
 public class DelayFlightService {
+
+   @Autowired
+   private FlightNatsPublisherService natsPublisher;
 
    private static final Logger log = LoggerFactory.getLogger(DelayFlightService.class);
 
@@ -87,6 +91,9 @@ public class DelayFlightService {
                   .filter(e -> e.getFlightIcao() != null && e.getDepTimeUtc() != null) // lọc record thiếu key
                   .collect(Collectors.toList());
 
+            for (FlightDelayDeparture entity : entities) {
+               natsPublisher.publishDelayDeparture(entity);
+            }
             if (!entities.isEmpty()) {
                delayPersistenceService.saveDeparturesAsync(entities);
             }
@@ -95,7 +102,9 @@ public class DelayFlightService {
                   .map(this::mapToArrivalEntity)
                   .filter(e -> e.getFlightIcao() != null && e.getDepTimeUtc() != null)
                   .collect(Collectors.toList());
-
+            for (FlightDelayArrival entity : entities) {
+               natsPublisher.publishDelayArrival(entity);
+            }
             if (!entities.isEmpty()) {
                delayPersistenceService.saveArrivalsAsync(entities);
             }
